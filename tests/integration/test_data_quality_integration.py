@@ -124,7 +124,7 @@ class TestDataQualityIntegration:
         result_json = await deployment_tools.call_tool(
             "get_deployments", {"environment": "PRODUCTION"}
         )
-        result = json.loads(result_json)
+        result = toon_decode(result_json)
 
         assert result["success"] is True
 
@@ -202,7 +202,7 @@ class TestDataQualityIntegration:
         deployment_tools = DeploymentTools(integration_db_connection)
 
         result_json = await deployment_tools.call_tool("get_deployments", {})
-        result = json.loads(result_json)
+        result = toon_decode(result_json)
 
         assert result["success"] is True
 

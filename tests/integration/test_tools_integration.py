@@ -6,7 +6,6 @@ against a real database with actual data.
 """
 
 import pytest
-import json
 from toon_format import decode as toon_decode
 
 from tools.devlake.incident_tools import IncidentTools
@@ -148,7 +147,7 @@ class TestDeploymentToolsIntegration:
         deployment_tools = DeploymentTools(integration_db_connection)
 
         result_json = await deployment_tools.call_tool("get_deployments", {})
-        result = json.loads(result_json)
+        result = toon_decode(result_json)
 
         assert result["success"] is True
         assert "deployments" in result
@@ -175,7 +174,7 @@ class TestDeploymentToolsIntegration:
         result_json = await deployment_tools.call_tool(
             "get_deployments", {"environment": "PRODUCTION"}
         )
-        result = json.loads(result_json)
+        result = toon_decode(result_json)
 
         assert result["success"] is True
         assert result["filters"]["environment"] == "PRODUCTION"
@@ -193,7 +192,7 @@ class TestDeploymentToolsIntegration:
         result_json = await deployment_tools.call_tool(
             "get_deployments", {"project": "Konflux_Pilot_Team"}
         )
-        result = json.loads(result_json)
+        result = toon_decode(result_json)
 
         assert result["success"] is True
         assert result["filters"]["project"] == "Konflux_Pilot_Team"
@@ -274,7 +273,7 @@ class TestDeploymentToolsIntegration:
 
         deployment_tools = DeploymentTools(integration_db_connection)
         result_json = await deployment_tools.call_tool("get_deployments", {})
-        result = json.loads(result_json)
+        result = toon_decode(result_json)
 
         assert result["success"] is True
         deployments = result["deployments"]
@@ -293,7 +292,7 @@ class TestDeploymentToolsIntegration:
         result_json = await deployment_tools.call_tool(
             "get_deployments", {"start_date": "2024-01-15", "end_date": "2024-01-17"}
         )
-        result = json.loads(result_json)
+        result = toon_decode(result_json)
 
         assert result["success"] is True
         assert "2024-01-15" in result["filters"]["start_date"]
@@ -301,3 +300,51 @@ class TestDeploymentToolsIntegration:
 
         deployments = result["deployments"]
         assert len(deployments) > 0
+
+    async def test_get_deployment_frequency_no_filters(
+        self, integration_db_connection, clean_database
+    ):
+        """Test getting deployment frequency without filters."""
+        deployment_tools = DeploymentTools(integration_db_connection)
+
+        result_json = await deployment_tools.call_tool("get_deployment_frequency", {})
+        result = toon_decode(result_json)
+
+        assert result["success"] is True
+        assert "summary" in result
+        assert "daily" in result
+        assert "weekly" in result
+        assert "monthly" in result
+        assert "dora_level" in result["summary"]
+        assert result["summary"]["dora_level"] in ["elite", "high", "medium", "low"]
+
+    async def test_get_deployment_frequency_with_date_range(
+        self, integration_db_connection, clean_database
+    ):
+        """Test getting deployment frequency with explicit date range."""
+        deployment_tools = DeploymentTools(integration_db_connection)
+
+        result_json = await deployment_tools.call_tool(
+            "get_deployment_frequency",
+            {"start_date": "2024-01-01", "end_date": "2024-01-31"},
+        )
+        result = toon_decode(result_json)
+
+        assert result["success"] is True
+        assert "summary" in result
+        assert result["date_range"]["start"] == "2024-01-01"
+        assert result["date_range"]["end"] == "2024-01-31"
+
+    async def test_get_deployment_frequency_with_project(
+        self, integration_db_connection, clean_database
+    ):
+        """Test getting deployment frequency with project filter."""
+        deployment_tools = DeploymentTools(integration_db_connection)
+
+        result_json = await deployment_tools.call_tool(
+            "get_deployment_frequency", {"project": "Konflux_Pilot_Team"}
+        )
+        result = toon_decode(result_json)
+
+        assert result["success"] is True
+        assert result["project"] == "Konflux_Pilot_Team"
