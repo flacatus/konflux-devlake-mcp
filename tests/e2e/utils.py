@@ -116,9 +116,12 @@ def _summarize_tool_output(tool_name, args, raw):
         return s if len(s) <= n else s[: n - 3] + "..."
 
     try:
-        data = json.loads(raw)
+        data = toon_decode(raw)
     except Exception:
-        return _truncate(raw.strip())
+        try:
+            data = json.loads(raw)
+        except Exception:
+            return _truncate(raw.strip())
 
     def _to_list(value):
         if isinstance(value, list):
