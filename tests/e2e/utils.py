@@ -2,6 +2,7 @@ import os
 import json
 from litellm import acompletion, Message
 from mcp.types import TextContent
+from toon_format import decode as toon_decode
 
 os.environ.setdefault("LITELLM_LOGGING", "False")
 os.environ.setdefault("LITELLM_VERBOSE", "0")
